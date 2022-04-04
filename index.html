@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Practice</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body{
+            background: #222;
+        }
+        canvas{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* height: 95vh;
+            width: 95vw;
+            max-height: 750px;
+            max-width: 350px; */
+            border: 0.5px solid #fff;
+        }
+    </style>
+</head>
+<body onload="startGame()">
+    <!-- <canvas id="gameView"></canvas> -->
+    <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none;">
+        <button onmousedown="moveup()" onmouseup="stopMove()" ontouchstart="moveup()">UP</button>
+        <button onmousedown="movedown()" onmouseup="stopMove()" ontouchstart="movedown()">DOWN</button>
+        <button onmousedown="moveleft()" onmouseup="stopMove()" ontouchstart="moveleft()">LEFT</button>
+        <button onmousedown="moveright()" onmouseup="stopMove()" ontouchstart="moveright()">RIGHT</button>
+    </div>
+    <script>
+        var myGamePiece;
+        var myObstacles = [];
+
+        var myGameArea = {
+            canvas : document.createElement("canvas"),
+            start : function() {
+                this.canvas.width = 360;
+                this.canvas.height = 650;
+                this.context = this.canvas.getContext("2d");
+                document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+                this.frameNo = 0;  
+                this.interval = setInterval(updateGameArea, 20);
+                window.addEventListener('keydown', function (e) {
+                    myGameArea.keys = (myGameArea.keys || []);
+                    myGameArea.keys[e.keyCode] = true;
+                })
+                window.addEventListener('keyup', function (e) {
+                    myGameArea.keys[e.keyCode] = false;
+                })
+            },
+            clear : function() {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            },
+            stop : function() {
+                clearInterval(this.interval);
+            }
+        }
+
+        function startGame() {
+            myGameArea.start();
+            // myObstacle = new component(50, 80, "green", 165, 0);
+            
+            myGamePiece = new component(40, 70, "red", 165, 570);
+        }
+
+
+        function component(width, height, color, x, y) {
+            this.width = width;
+            this.height = height;
+            this.x = x;
+            this.y = y;
+            this.speedX = 0;
+            this.speedY = 0;
+            ctx = myGameArea.context;
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            this.update = function(){
+                ctx = myGameArea.context;
+                ctx.fillStyle = color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            this.newPos = function() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+            }
+            this.crashWith = function(otherobj) {
+                var myleft = this.x;
+                var myright = this.x + (this.width);
+                var mytop = this.y;
+                var mybottom = this.y + (this.height);
+                var otherleft = otherobj.x;
+                var otherright = otherobj.x + (otherobj.width);
+                var othertop = otherobj.y;
+                var otherbottom = otherobj.y + (otherobj.height);
+                var crash = true;
+                if ((mybottom < othertop) ||
+                    (mytop > otherbottom) ||
+                    (myright < otherleft) ||
+                    (myleft > otherright)) {
+                    crash = false;
+                }
+                return crash;
+            }
+        }
+
+        function updateGameArea() {
+
+            var x, y;
+            for (i = 0; i < myObstacles.length; i += 1) {
+                if (myGamePiece.crashWith(myObstacles[i])) {
+                myGameArea.stop();
+                return;
+                }
+            }
+            myGameArea.clear();
+            myGameArea.frameNo += 1;
+            if (myGameArea.frameNo == 1 || everyinterval(100)) {
+                x = Math.floor(Math.random() * 255) + 10;
+                y = -80
+                myObstacles.push(new component(50, 80, "green", x, y));
+            }
+            for (i = 0; i < myObstacles.length; i += 1) {
+                myObstacles[i].y += 1;
+                myObstacles[i].update();
+            }
+
+            myGamePiece.speedX = 0;
+            myGamePiece.speedY = 0;
+            if (myGameArea.keys && (myGameArea.keys[37] || myGameArea.keys[65])) {myGamePiece.speedX = -1; }
+            if (myGameArea.keys && (myGameArea.keys[39] || myGameArea.keys[68])) {myGamePiece.speedX = 1; }
+            if (myGameArea.keys && (myGameArea.keys[38] || myGameArea.keys[87])) {myGamePiece.speedY = -1; }
+            if (myGameArea.keys && (myGameArea.keys[40] || myGameArea.keys[83])) {myGamePiece.speedY = 1; }
+            myGamePiece.newPos();
+            myGamePiece.update();
+
+        }
+
+        function moveup() {
+            myGamePiece.speedY -= 1;
+        }
+
+        function movedown() {
+            myGamePiece.speedY += 1;
+        }
+
+        function moveleft() {
+            myGamePiece.speedX -= 1;
+        }
+
+        function moveright() {
+            myGamePiece.speedX += 1;
+        }
+
+        function stopMove() {
+            myGamePiece.speedX = 0;
+            myGamePiece.speedY = 0;
+        }
+
+        function everyinterval(n) {
+            if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+            return false;
+        }
+
+    </script>
+    
+</body>
+</html>
